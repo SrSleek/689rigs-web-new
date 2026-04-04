@@ -1,214 +1,350 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { getCollection, getCollectionImages, type ShopifyProduct } from '@/lib/shopify'
+import ProductCard from '@/components/ProductCard'
+import CollectionStrip from '@/components/CollectionStrip'
 
-interface Props {
-  params: { handle: string }
+/* ══════════════════════════════════════════════════════════════
+   689 RIGS — HOMEPAGE v2 (Parte 3)
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Configuración de secciones ────────────────────────────── */
+interface CollectionCard {
+  label: string
+  href: string
+  handle: string
 }
 
-// Colecciones conocidas con su metadata
-const COLLECTION_META: Record<string, { title: string; eyebrow: string }> = {
-  'volantes':                         { title: 'Volantes', eyebrow: 'Sim Racing · Controles' },
-  'pedales':                          { title: 'Pedales', eyebrow: 'Sim Racing · Controles' },
-  'servos-dd':                        { title: 'Bases DD / Servos', eyebrow: 'Sim Racing · Controles' },
-  'collections-cockpits':             { title: 'Cockpits & Rigs', eyebrow: 'Sim Racing · Estructuras' },
-  'rigs':                             { title: 'Bundles Sim Racing', eyebrow: 'Sim Racing · Bundles' },
-  'palanca-de-cambios-y-frenos-de-mano': { title: 'Shifters & Handbrakes', eyebrow: 'Sim Racing · Controles' },
-  'soportes-y-bandejas':              { title: 'Soportes & Bandejas', eyebrow: 'Sim Racing · Accesorios' },
-  'dashboards-y-button-boxes':        { title: 'Dashboards & Button Boxes', eyebrow: 'Sim Racing · Displays' },
-  'custom-collection-10':             { title: 'DOFs & Haptics', eyebrow: 'Sim Racing · Motion' },
-  'custom-collection-11':             { title: 'Asientos Racing', eyebrow: 'Sim Racing · Cockpits' },
-  'smart-collection':                 { title: 'Monitor Stands', eyebrow: 'Sim Racing · Displays' },
-  'monitores':                        { title: 'Monitores', eyebrow: 'PC Gaming · Displays' },
-  'pcs':                              { title: 'PCs Gaming', eyebrow: 'PC Gaming · Builds' },
-  'procesadores':                     { title: 'Procesadores', eyebrow: 'PC Gaming · Componentes' },
-  'ssd':                              { title: 'SSD & Almacenamiento', eyebrow: 'PC Gaming · Storage' },
-  'sonido':                           { title: 'Sonido & Audio', eyebrow: 'PC Gaming · Periféricos' },
-  'asientos-flight':                  { title: 'Fly Sim', eyebrow: 'Flight Simulator · Bundles' },
-  'controles-de-vuelo':               { title: 'Controles de Vuelo', eyebrow: 'Flight Simulator · Controles' },
-  'gorras-oficial-f1':                { title: 'Merch F1 Oficial', eyebrow: 'Merch · Fórmula 1' },
-  'gorras-motorsport':                { title: 'Merch MotorSport', eyebrow: 'Merch · Motorsport' },
-  'coleccionables':                   { title: 'Coleccionables', eyebrow: 'Merch · Die-Cast & Escala' },
-  'juguetes':                         { title: 'Juguetes', eyebrow: 'Merch · Juguetes' },
+interface ProductSection {
+  id: string
+  title: string
+  eyebrow: string
+  importNote: string
+  collectionHandle: string
+  collections: CollectionCard[]
 }
 
-export default async function CollectionPage({ params }: Props) {
-  const meta = COLLECTION_META[params.handle]
+const SECTIONS: ProductSection[] = [
+  {
+    id: 'simracing',
+    title: 'Sim Racing',
+    eyebrow: 'Simuladores de Carrera',
+    importNote: 'Buscas algo en especial de importación? Pregúntanos!',
+    collectionHandle: 'servos-dd',
+    collections: [
+      { label: 'Bases DD / Servos', href: '/collections/servos-dd', handle: 'servos-dd' },
+      { label: 'Volantes', href: '/collections/volantes', handle: 'volantes' },
+      { label: 'Pedales', href: '/collections/pedales', handle: 'pedales' },
+      { label: 'Cockpits & Rigs', href: '/collections/collections-cockpits', handle: 'collections-cockpits' },
+      { label: 'Asientos Racing', href: '/collections/custom-collection-11', handle: 'custom-collection-11' },
+      { label: 'Accesorios', href: '/collections/soportes-y-bandejas', handle: 'soportes-y-bandejas' },
+    ],
+  },
+  {
+    id: 'flysim',
+    title: 'Flight Sim',
+    eyebrow: 'Simuladores de Vuelo',
+    importNote: 'Buscas algo en especial de importación? Pregúntanos!',
+    collectionHandle: 'controles-de-vuelo',
+    collections: [
+      { label: 'Controles de Vuelo', href: '/collections/controles-de-vuelo', handle: 'controles-de-vuelo' },
+      { label: 'Bundles Vuelo', href: '/collections/asientos-flight', handle: 'asientos-flight' },
+      { label: 'Asientos Flight', href: '/collections/asientos-flight', handle: 'asientos-flight' },
+      { label: 'Monitor Stands', href: '/collections/smart-collection', handle: 'smart-collection' },
+    ],
+  },
+  {
+    id: 'pcgaming',
+    title: 'PC Hardware',
+    eyebrow: 'Componentes y Periféricos',
+    importNote: 'Buscas algo en especial de importación? Pregúntanos!',
+    collectionHandle: 'pcs',
+    collections: [
+      { label: 'PCs Completas', href: '/collections/pcs', handle: 'pcs' },
+      { label: 'Procesadores', href: '/collections/procesadores', handle: 'procesadores' },
+      { label: 'SSD & Storage', href: '/collections/ssd', handle: 'ssd' },
+      { label: 'Monitores', href: '/collections/monitores', handle: 'monitores' },
+      { label: 'Sonido & Audio', href: '/collections/sonido', handle: 'sonido' },
+      { label: 'Accesorios', href: '/collections/soportes-y-bandejas', handle: 'soportes-y-bandejas' },
+    ],
+  },
+  {
+    id: 'merch',
+    title: 'Merch & Coleccionables',
+    eyebrow: 'Oficial F1 · Motorsport · Die-Cast',
+    importNote: '',
+    collectionHandle: 'gorras-oficial-f1',
+    collections: [
+      { label: 'Gorras F1 Oficial', href: '/collections/gorras-oficial-f1', handle: 'gorras-oficial-f1' },
+      { label: 'Gorras MotorSport', href: '/collections/gorras-motorsport', handle: 'gorras-motorsport' },
+      { label: 'Coleccionables', href: '/collections/coleccionables', handle: 'coleccionables' },
+      { label: 'Juguetes', href: '/collections/juguetes', handle: 'juguetes' },
+    ],
+  },
+  /* ── NUEVAS SECCIONES (Parte 3) ──────────────────────────── */
+  {
+    id: 'nuevos',
+    title: 'Nuevos Productos',
+    eyebrow: 'Lo más reciente en la tienda',
+    importNote: 'Buscas algo en especial de importación? Pregúntanos!',
+    collectionHandle: 'nuevos-productos',
+    collections: [
+      { label: 'Sim Racing', href: '/collections/servos-dd', handle: 'servos-dd' },
+      { label: 'Flight Sim', href: '/collections/controles-de-vuelo', handle: 'controles-de-vuelo' },
+      { label: 'PC Hardware', href: '/collections/pcs', handle: 'pcs' },
+      { label: 'Monitores', href: '/collections/monitores', handle: 'monitores' },
+      { label: 'Accesorios', href: '/collections/soportes-y-bandejas', handle: 'soportes-y-bandejas' },
+    ],
+  },
+  {
+    id: 'bestsellers',
+    title: 'Más Vendidos',
+    eyebrow: 'Los favoritos de nuestros clientes',
+    importNote: '',
+    collectionHandle: 'best-sellers',
+    collections: [
+      { label: 'Sim Racing', href: '/collections/servos-dd', handle: 'servos-dd' },
+      { label: 'Cockpits', href: '/collections/collections-cockpits', handle: 'collections-cockpits' },
+      { label: 'Volantes', href: '/collections/volantes', handle: 'volantes' },
+      { label: 'Pedales', href: '/collections/pedales', handle: 'pedales' },
+      { label: 'Merch F1', href: '/collections/gorras-oficial-f1', handle: 'gorras-oficial-f1' },
+    ],
+  },
+]
 
-  // Si no es una colección conocida, 404
-  if (!meta) notFound()
+const CATEGORY_TAGS = [
+  { label: 'Sim Racing', href: '/collections/servos-dd' },
+  { label: 'PC Hardware', href: '/collections/pcs' },
+  { label: 'Fly Sim', href: '/collections/controles-de-vuelo' },
+  { label: 'Merch F1', href: '/collections/gorras-oficial-f1' },
+  { label: 'Coleccionables', href: '/collections/coleccionables' },
+  { label: 'Monitores', href: '/collections/monitores' },
+  { label: 'Audio', href: '/collections/sonido' },
+  { label: 'Cockpits', href: '/collections/collections-cockpits' },
+  { label: 'Volantes', href: '/collections/volantes' },
+  { label: 'Pedales', href: '/collections/pedales' },
+  { label: 'Asientos', href: '/collections/custom-collection-11' },
+  { label: 'Importación', href: '/pages/importacion' },
+]
 
-  // Intenta cargar productos de Shopify
-  let products: any[] = []
-  let collectionTitle = meta.title
+/* ── Fetch helpers ─────────────────────────────────────────── */
 
+/** Fetch 1 product from each collection in the category, then shuffle to show variety */
+async function getMixedSectionProducts(
+  collections: CollectionCard[],
+  totalCount = 4
+): Promise<ShopifyProduct[]> {
   try {
-    const { getCollection } = await import('@/lib/shopify')
-    const collection = await getCollection(params.handle, 24)
-    if (collection) {
-      products = collection.products.nodes
-      collectionTitle = collection.title || meta.title
+    // Fetch 2 products from each collection in parallel
+    const results = await Promise.all(
+      collections.map(col =>
+        getCollection(col.handle, 2)
+          .then(c => c?.products.nodes ?? [])
+          .catch(() => [])
+      )
+    )
+
+    // Flatten all products and remove duplicates by id
+    const seen = new Set<string>()
+    const allProducts: ShopifyProduct[] = []
+    
+    // Round-robin: take 1 from each collection first, then 1 more from each
+    for (let round = 0; round < 2; round++) {
+      for (const collectionProducts of results) {
+        if (collectionProducts[round] && !seen.has(collectionProducts[round].id)) {
+          seen.add(collectionProducts[round].id)
+          allProducts.push(collectionProducts[round])
+        }
+      }
     }
-  } catch (e) {
-    // Sin token válido — muestra la página vacía con diseño completo
-    console.log('Shopify token not configured yet')
+
+    // Return first N products (already mixed from different collections)
+    return allProducts.slice(0, totalCount)
+  } catch {
+    return []
   }
+}
+
+/* ── PromoBanner (solo imagen) ─────────────────────────────── */
+function PromoBanner({ id }: { id: number }) {
+  return (
+    <div className="promo-banner-img">
+      <Link href={id === 1 ? '/pages/importacion' : '/collections/ofertas'}>
+        <img
+          src={`/banner-promo-${id}.jpg`}
+          alt={`Promoción ${id}`}
+          className="promo-banner-img__image"
+        />
+      </Link>
+    </div>
+  )
+}
+
+/* ══════════════════════════════════════════════════════════════
+   HOMEPAGE
+   ══════════════════════════════════════════════════════════════ */
+export default async function HomePage() {
+  // Fetch products and collection images in parallel
+  const allCollectionHandles = [...new Set(SECTIONS.flatMap(s => s.collections.map(c => c.handle)))]
+  
+  const [sectionProducts, collectionImages] = await Promise.all([
+    Promise.all(SECTIONS.map(s => getMixedSectionProducts(s.collections, 4))),
+    getCollectionImages(allCollectionHandles).catch(() => ({} as Record<string, string | null>)),
+  ])
 
   return (
-    <div style={{ background: '#000', minHeight: '100vh', color: '#fff' }}>
-
-      {/* Breadcrumb */}
-      <div style={{ padding: '10px 20px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#555', borderBottom: '1px solid #1e1e1e' }}>
-        <Link href="/" style={{ color: '#555', textDecoration: 'none' }}>Inicio</Link>
-        <span style={{ color: '#333' }}>›</span>
-        <span style={{ color: '#555' }}>Catálogo</span>
-        <span style={{ color: '#333' }}>›</span>
-        <span style={{ color: '#fff' }}>{collectionTitle}</span>
-      </div>
-
-      {/* Collection header */}
-      <div style={{ background: '#0a0a0a', padding: '28px 20px 20px', borderBottom: '1px solid #1e1e1e', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-        <div>
-          <div style={{ fontFamily: "'Roboto Condensed', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '.22em', textTransform: 'uppercase', color: '#cc2200', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ display: 'inline-block', width: '20px', height: '1px', background: '#cc2200' }} />
-            {meta.eyebrow}
-          </div>
-          <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '48px', letterSpacing: '.06em', color: '#fff', lineHeight: 1, margin: 0 }}>
-            {collectionTitle}
-          </h1>
-          <div style={{ fontFamily: "'Roboto Condensed', sans-serif", fontSize: '11px', fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: '#444', marginTop: '6px' }}>
-            {products.length > 0 ? `${products.length} productos` : 'Cargando catálogo…'}
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '11px', color: '#555' }}>Ordenar:</span>
-          <select style={{ background: '#111', color: '#fff', border: '1px solid #1e1e1e', padding: '6px 10px', fontSize: '12px', outline: 'none', cursor: 'pointer' }}>
-            <option>Destacados</option>
-            <option>Precio: menor a mayor</option>
-            <option>Precio: mayor a menor</option>
-            <option>Nombre A–Z</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr' }}>
-
-        {/* Sidebar */}
-        <div style={{ borderRight: '1px solid #1e1e1e', paddingTop: '8px' }}>
-          {[
-            { title: 'Marca', items: products.length > 0
-                ? Array.from(new Set(products.map((p: any) => p.vendor).filter(Boolean))) as string[]
-                : ['Fanatec', 'Moza Racing', 'Heusinkveld', 'Simucube'] },
-            { title: 'Precio (USD)', items: ['Menos de $500', '$500 – $1,500', '$1,500 – $3,000', 'Más de $3,000'] },
-            { title: 'Disponibilidad', items: ['En stock', 'Importación', 'En oferta'] },
-          ].map(section => (
-            <div key={section.title} style={{ borderBottom: '1px solid #1e1e1e' }}>
-              <div style={{ padding: '12px 16px', fontFamily: "'Roboto Condensed', sans-serif", fontSize: '11px', fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: '#555' }}>
-                {section.title}
-              </div>
-              {section.items.map((item: string) => (
-                <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '5px 16px', fontSize: '12px', color: '#555', cursor: 'pointer' }}>
-                  <div style={{ width: '13px', height: '13px', border: '1px solid #2a2a2a', flexShrink: 0 }} />
-                  {item}
+    <div className="homepage">
+      {/* ── 1. HERO ───────────────────────────────────────── */}
+      <section className="hero">
+        <div className="hero__grid">
+          <div className="hero__info">
+            <div className="hero__badge">SIM CENTER CLUB</div>
+            <h1 className="hero__title">689 RIGS</h1>
+            <p className="hero__subtitle">Simuladores de Carrera & Hardware</p>
+            <div className="hero__details">
+              <div className="hero__detail-item">
+                <span className="hero__detail-icon">📍</span>
+                <div>
+                  <strong>Barrio Cascatta, Puebla</strong>
+                  <br />
+                  <span className="hero__detail-sub">Local 2do piso</span>
                 </div>
-              ))}
+              </div>
+              <div className="hero__detail-item">
+                <span className="hero__detail-icon">🕐</span>
+                <div>
+                  <strong>Lunes – Jueves</strong> 12pm – 9pm
+                  <br />
+                  <strong>Viernes – Domingo</strong> 12pm – 10pm
+                </div>
+              </div>
             </div>
+            <div className="hero__actions">
+              <Link href="https://maps.google.com/?q=689+Rigs+Barrio+Cascatta+Puebla" target="_blank" className="hero__btn hero__btn--primary">
+                📍 Cómo llegar
+              </Link>
+              <Link href="/pages/sim-center" className="hero__btn hero__btn--secondary">
+                Conoce el local →
+              </Link>
+            </div>
+          </div>
+          <div className="hero__image">
+            <img src="/hero-local.png" alt="689 Rigs Sim Center Club - Barrio Cascatta, Puebla" />
+            <div className="hero__image-overlay">
+              <span>PRUEBA ANTES DE COMPRAR</span>
+            </div>
+          </div>
+          <Link href="https://maps.google.com/?q=689+Rigs+Barrio+Cascatta+Puebla" target="_blank" className="hero__map">
+            <div className="hero__map-bg" />
+            <div className="hero__map-overlay">
+              <span className="hero__map-label">📍 VER EN GOOGLE MAPS →</span>
+            </div>
+          </Link>
+        </div>
+      </section>
+
+      {/* ── 2. CATEGORY TAGS ──────────────────────────────── */}
+      <section className="category-tags">
+        <div className="category-tags__scroll">
+          {CATEGORY_TAGS.map(tag => (
+            <Link key={tag.label} href={tag.href} className="category-tags__tag">
+              {tag.label}
+            </Link>
           ))}
         </div>
+      </section>
 
-        {/* Products */}
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderBottom: '1px solid #1e1e1e' }}>
-            <span style={{ fontSize: '11px', color: '#555' }}>
-              {products.length > 0 ? `Mostrando 1–${products.length} de ${products.length} productos` : 'Conectando con catálogo Shopify…'}
-            </span>
-          </div>
-
-          {products.length === 0 ? (
-            /* Sin token — muestra skeleton / mensaje */
-            <div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: '#1e1e1e' }}>
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} style={{ background: '#000' }}>
-                    <div style={{ width: '100%', aspectRatio: '1', background: '#0d0d0d', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: '1px solid #1e1e1e', opacity: 0.3 }} />
-                    </div>
-                    <div style={{ padding: '12px 14px 18px' }}>
-                      <div style={{ height: '10px', background: '#111', width: '40%', marginBottom: '8px' }} />
-                      <div style={{ height: '13px', background: '#111', width: '80%', marginBottom: '6px' }} />
-                      <div style={{ height: '13px', background: '#111', width: '60%', marginBottom: '10px' }} />
-                      <div style={{ height: '15px', background: '#111', width: '30%' }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div style={{ padding: '24px', textAlign: 'center', borderTop: '1px solid #1e1e1e' }}>
-                <p style={{ fontSize: '12px', color: '#444', fontFamily: "'Roboto Condensed', sans-serif", letterSpacing: '.1em', textTransform: 'uppercase' }}>
-                  ⚙ Pendiente: configurar Storefront API token en .env.local
-                </p>
-                <Link
-                  href={`https://689rigs.com/collections/${params.handle}`}
-                  target="_blank"
-                  style={{ display: 'inline-block', marginTop: '12px', padding: '8px 20px', background: '#cc2200', color: '#fff', fontSize: '10px', fontFamily: "'Roboto Condensed', sans-serif", fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', textDecoration: 'none' }}
-                >
-                  Ver en tienda actual →
-                </Link>
-              </div>
-            </div>
-          ) : (
-            /* Con token — productos reales */
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: '#1e1e1e' }}>
-              {products.map((product: any) => {
-                const price = parseFloat(product.priceRange.minVariantPrice.amount)
-                const comparePrice = parseFloat(product.compareAtPriceRange?.minVariantPrice?.amount ?? '0')
-                const onSale = comparePrice > 0 && comparePrice > price
-                const currency = product.priceRange.minVariantPrice.currencyCode
-
-                const fmt = (n: number) => new Intl.NumberFormat('es-MX', {
-                  style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0
-                }).format(n)
-
-                const isImport = product.tags?.some((t: string) => ['importacion','import','importación'].includes(t.toLowerCase()))
-                const isNew = product.tags?.some((t: string) => ['nuevo','new'].includes(t.toLowerCase()))
-
-                return (
-                  <Link
-                    key={product.id}
-                    href={`/products/${product.handle}`}
-                    style={{ background: '#000', textDecoration: 'none', display: 'flex', flexDirection: 'column' }}
-                  >
-                    <div style={{ width: '100%', aspectRatio: '1', background: '#111', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {product.featuredImage ? (
-                        <img
-                          src={product.featuredImage.url}
-                          alt={product.featuredImage.altText ?? product.title}
-                          style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '12px', mixBlendMode: 'lighten' }}
-                        />
-                      ) : (
-                        <div style={{ width: '48px', height: '48px', opacity: 0.1, border: '1px solid #fff', borderRadius: '50%' }} />
-                      )}
-                      {onSale && <span style={{ position: 'absolute', top: '10px', left: '10px', background: '#cc2200', color: '#fff', fontSize: '9px', fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', padding: '3px 7px' }}>Oferta</span>}
-                      {!onSale && isImport && <span style={{ position: 'absolute', top: '10px', left: '10px', background: 'transparent', color: '#cc2200', border: '1px solid #cc2200', fontSize: '9px', fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', padding: '3px 7px' }}>Import</span>}
-                      {!onSale && !isImport && isNew && <span style={{ position: 'absolute', top: '10px', left: '10px', background: 'transparent', color: '#00cc44', border: '1px solid #00cc44', fontSize: '9px', fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', padding: '3px 7px' }}>Nuevo</span>}
-                    </div>
-                    <div style={{ padding: '12px 14px 0', flex: 1 }}>
-                      <div style={{ fontFamily: "'Roboto Condensed', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', color: '#555', marginBottom: '3px' }}>{product.vendor}</div>
-                      <div style={{ fontSize: '13px', color: '#ccc', lineHeight: 1.4, marginBottom: '8px' }}>{product.title}</div>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                        <span style={{ fontSize: '15px', fontWeight: 600, color: onSale ? '#cc2200' : '#fff' }}>{fmt(price)}</span>
-                        {onSale && <span style={{ fontSize: '12px', color: '#444', textDecoration: 'line-through' }}>{fmt(comparePrice)}</span>}
-                      </div>
-                    </div>
-                    <div style={{ borderTop: '1px solid #1e1e1e', color: '#555', fontFamily: "'Roboto Condensed', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', padding: '9px 14px', marginTop: '12px' }}>
-                      Ver producto →
-                    </div>
-                  </Link>
-                )
-              })}
+      {/* ── 3–8. PRODUCT SECTIONS (4 original + 2 new) ──── */}
+      {SECTIONS.map((section, idx) => (
+        <div key={section.id}>
+          {section.importNote && (
+            <div className="import-note">
+              <span className="import-note__line" />
+              <span className="import-note__text">{section.importNote}</span>
+              <span className="import-note__line" />
             </div>
           )}
+
+          <section className="product-section" id={section.id}>
+            <div className="product-section__header">
+              <h2 className="product-section__title">{section.title}</h2>
+              <span className="product-section__eyebrow">{section.eyebrow}</span>
+            </div>
+
+            <div className="product-section__grid">
+              {sectionProducts[idx].length > 0
+                ? sectionProducts[idx].map(product => (
+                    <ProductCard key={product.id} product={product} />
+                  ))
+                : Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="product-card product-card--skeleton">
+                      <div className="product-card__image"><div className="product-card__placeholder" /></div>
+                      <div className="product-card__info">
+                        <div style={{ height: 10, background: '#111', width: '40%', marginBottom: 6 }} />
+                        <div style={{ height: 13, background: '#111', width: '80%', marginBottom: 6 }} />
+                        <div style={{ height: 15, background: '#111', width: '30%' }} />
+                      </div>
+                    </div>
+                  ))
+              }
+            </div>
+
+            <CollectionStrip collections={section.collections} collectionImages={collectionImages} />
+          </section>
+
+          {/* Banner cada 2 secciones */}
+          {(idx + 1) % 2 === 0 && idx < SECTIONS.length && (
+            <PromoBanner id={Math.floor((idx + 1) / 2)} />
+          )}
         </div>
-      </div>
+      ))}
+
+      {/* ── FOOTER ────────────────────────────────────────── */}
+      <footer className="site-footer">
+        <div className="site-footer__content">
+          <div className="site-footer__col">
+            <h4 className="site-footer__heading">General</h4>
+            <Link href="/pages/about" className="site-footer__link">Sobre Nosotros</Link>
+            <Link href="/pages/sim-center" className="site-footer__link">Sim Center Club</Link>
+            <Link href="https://maps.google.com/?q=689+Rigs+Barrio+Cascatta+Puebla" target="_blank" className="site-footer__link">Ubicación · Google Maps</Link>
+            <Link href="/pages/importacion" className="site-footer__link">Importación EE.UU.</Link>
+          </div>
+          <div className="site-footer__col">
+            <h4 className="site-footer__heading">Soporte</h4>
+            <Link href="https://689rigs.com/pages/politica-de-reembolso-y-devoluciones" target="_blank" className="site-footer__link">Devoluciones y Reembolsos</Link>
+            <Link href="/pages/envios" className="site-footer__link">Política de Envío</Link>
+            <Link href="/pages/pagos" className="site-footer__link">Métodos de Pago</Link>
+            <Link href="/pages/preguntas-frecuentes" className="site-footer__link">Preguntas Frecuentes</Link>
+          </div>
+          <div className="site-footer__col">
+            <h4 className="site-footer__heading">Legal</h4>
+            <Link href="https://689rigs.com/pages/avisodeprivacidad" target="_blank" className="site-footer__link">Aviso de Privacidad</Link>
+            <Link href="/pages/terminos" className="site-footer__link">Términos y Condiciones</Link>
+          </div>
+          <div className="site-footer__col">
+            <h4 className="site-footer__heading">Contacto</h4>
+            <Link href="https://wa.me/522215698976" target="_blank" className="site-footer__link">💬 WhatsApp: +52 221 569 8976</Link>
+            <Link href="mailto:689.accessories@gmail.com" className="site-footer__link">✉ 689.accessories@gmail.com</Link>
+            <div className="site-footer__socials">
+              <Link href="https://instagram.com/689.rigs" target="_blank" className="site-footer__social" aria-label="Instagram 689.rigs">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" /><circle cx="12" cy="12" r="5" /><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none" /></svg>
+              </Link>
+              <Link href="https://instagram.com/689rigs.simcenterclub" target="_blank" className="site-footer__social" aria-label="Instagram Sim Center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" /><circle cx="12" cy="12" r="5" /><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none" /></svg>
+              </Link>
+              <Link href="https://tiktok.com/@689.rigs" target="_blank" className="site-footer__social" aria-label="TikTok">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.75a8.18 8.18 0 004.76 1.52V6.84a4.83 4.83 0 01-1-.15z" /></svg>
+              </Link>
+            </div>
+          </div>
+        </div>
+        <div className="site-footer__bottom">
+          <span>© {new Date().getFullYear()} 689 Rigs — Simuladores de Carrera & Hardware · Puebla, México</span>
+          <div className="site-footer__bottom-links">
+            <Link href="https://689rigs.com/pages/avisodeprivacidad" target="_blank">Privacidad</Link>
+            <Link href="/pages/terminos">Términos</Link>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

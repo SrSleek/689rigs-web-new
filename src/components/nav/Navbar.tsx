@@ -4,10 +4,13 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import MegaMenu from './MegaMenu'
 import { menuConfig } from './menuConfig'
+import { useCart } from '@/components/cart/CartContext'
+import CurrencySelector from '@/components/CurrencySelector'
 
 export default function Navbar() {
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const [scrolled, setScrolled] = useState(false)
+  const { openCart, totalQuantity } = useCart()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10)
@@ -17,7 +20,6 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Announcement bar */}
       <div style={{
         background: '#cc2200', textAlign: 'center', padding: '7px 16px',
         fontSize: '10px', fontWeight: 700, letterSpacing: '.16em',
@@ -27,15 +29,10 @@ export default function Navbar() {
       </div>
 
       <nav style={{
-        background: '#000', position: 'sticky', top: 0, zIndex: 999,
+        background: '#000', position: 'relative', zIndex: 999,
         borderBottom: scrolled ? '1px solid #2a2a2a' : '1px solid #1e1e1e',
-      }}
-        
-      >
-        {/* Top bar */}
-        <div style={{ display: 'flex', alignItems: 'center', padding: '0 20px', height: '56px', gap: '16px' }}>
-
-          {/* Logo */}
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', padding: '0 20px', height: '56px', gap: '16px', position: 'sticky', top: 0, zIndex: 1000, background: '#000' }}>
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0, marginRight: '16px', textDecoration: 'none' }}>
             <div style={{
               width: '34px', height: '34px',
@@ -47,13 +44,8 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* Search */}
           <div style={{ flex: 1, maxWidth: '500px', display: 'flex', height: '36px', border: '1px solid #1e1e1e', background: '#111' }}>
-            <input
-              type="text"
-              placeholder="Buscar cockpits, volantes, pedales, GPUs…"
-              style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#fff', padding: '0 12px', fontSize: '12px' }}
-            />
+            <input type="text" placeholder="Buscar cockpits, volantes, pedales, GPUs…" style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#fff', padding: '0 12px', fontSize: '12px' }} />
             <button style={{ background: '#cc2200', border: 'none', cursor: 'pointer', padding: '0 13px', color: '#fff', display: 'flex', alignItems: 'center' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
@@ -61,15 +53,17 @@ export default function Navbar() {
             </button>
           </div>
 
-          {/* Icons */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginLeft: 'auto' }}>
+            {/* Currency Selector */}
+            <CurrencySelector />
+
             <Link href="/account" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', color: '#777', fontSize: '9px', letterSpacing: '.06em', textTransform: 'uppercase', fontFamily: "'Roboto Condensed', sans-serif", fontWeight: 700, textDecoration: 'none' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
               </svg>
               Cuenta
             </Link>
-            <Link href="/cart" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', color: '#777', fontSize: '9px', letterSpacing: '.06em', textTransform: 'uppercase', fontFamily: "'Roboto Condensed', sans-serif", fontWeight: 700, textDecoration: 'none', position: 'relative' }}>
+            <div onClick={openCart} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', color: '#777', fontSize: '9px', letterSpacing: '.06em', textTransform: 'uppercase', fontFamily: "'Roboto Condensed', sans-serif", fontWeight: 700, cursor: 'pointer', position: 'relative' }}>
               <div style={{ position: 'relative' }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
@@ -77,15 +71,14 @@ export default function Navbar() {
                   <path d="M16 10a4 4 0 0 1-8 0" />
                 </svg>
                 <span style={{ position: 'absolute', top: '-3px', right: '-7px', background: '#cc2200', color: '#fff', fontSize: '9px', fontWeight: 700, width: '15px', height: '15px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  0
+                  {totalQuantity}
                 </span>
               </div>
               Carrito
-            </Link>
+            </div>
           </div>
         </div>
 
-        {/* Category bar */}
         <div style={{ display: 'flex', alignItems: 'stretch', borderTop: '1px solid #1e1e1e', overflowX: 'auto' }}>
           {menuConfig.map((cat) => (
             <div
@@ -104,14 +97,13 @@ export default function Navbar() {
               }}
             >
               {cat.label}
-              {(cat.mega || cat.simple) && (
+              {(cat.collections || cat.simple) && (
                 <span style={{ fontSize: '7px', opacity: openMenu === cat.id ? 0.8 : 0.4 }}>▾</span>
               )}
             </div>
           ))}
         </div>
 
-        {/* Mega menu */}
         {openMenu && (
           <MegaMenu
             category={menuConfig.find(c => c.id === openMenu)!}
