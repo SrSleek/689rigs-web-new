@@ -1,8 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import AddToCartButton from '@/components/cart/AddToCartButton'
-import ProductPrice from '@/components/ProductPrice'
 import ProductGallery from '@/components/ProductGallery'
+import ProductInfo from '@/components/ProductInfo'
 
 interface Props {
   params: Promise<{ handle: string }>
@@ -63,13 +62,12 @@ export default async function ProductPage({ params }: Props) {
             <div className="pdp__vendor">{vendor}</div>
             <h1 className="pdp__title">{title}</h1>
 
-            <div className="pdp__price">
-              <ProductPrice amount={price} currencyCode={currency} />
-            </div>
-
-            <AddToCartButton
+            {/* Price + Variants + Add to Cart — all in one client component */}
+            <ProductInfo
               variants={variants}
               options={options}
+              defaultPrice={price}
+              defaultCurrency={currency}
               whatsappUrl={`https://wa.me/522215698976?text=Hola! Me interesa: ${title}`}
             />
 
