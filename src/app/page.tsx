@@ -188,7 +188,7 @@ export default async function HomePage() {
   const allCollectionHandles = [...new Set(SECTIONS.flatMap(s => s.collections.map(c => c.handle)))]
   
   const [sectionProducts, collectionImages] = await Promise.all([
-    Promise.all(SECTIONS.map(s => getMixedSectionProducts(s.collections, 4))),
+    Promise.all(SECTIONS.map(s => getMixedSectionProducts(s.collections, 12))),
     getCollectionImages(allCollectionHandles).catch(() => ({} as Record<string, string | null>)),
   ])
 
