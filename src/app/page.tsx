@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { getCollection, getCollectionImages, type ShopifyProduct } from '@/lib/shopify'
 import ProductCard from '@/components/ProductCard'
 import CollectionStrip from '@/components/CollectionStrip'
+import RotatingProductGrid from '@/components/RotatingProductGrid'
 
 /* ══════════════════════════════════════════════════════════════
    689 RIGS — HOMEPAGE v2 (Parte 3)
@@ -128,16 +129,16 @@ const CATEGORY_TAGS = [
 
 /* ── Fetch helpers ─────────────────────────────────────────── */
 
-/** Fetch 1 product from each collection in the category, then shuffle to show variety */
+/** Fetch products from each collection in the category for rotation */
 async function getMixedSectionProducts(
   collections: CollectionCard[],
-  totalCount = 4
+  totalCount = 12
 ): Promise<ShopifyProduct[]> {
   try {
-    // Fetch 2 products from each collection in parallel
+    // Fetch 4 products from each collection in parallel
     const results = await Promise.all(
       collections.map(col =>
-        getCollection(col.handle, 2)
+        getCollection(col.handle, 4)
           .then(c => c?.products.nodes ?? [])
           .catch(() => [])
       )
@@ -147,8 +148,9 @@ async function getMixedSectionProducts(
     const seen = new Set<string>()
     const allProducts: ShopifyProduct[] = []
     
-    // Round-robin: take 1 from each collection first, then 1 more from each
-    for (let round = 0; round < 2; round++) {
+    // Round-robin: take from each collection evenly
+    const maxRounds = 4
+    for (let round = 0; round < maxRounds; round++) {
       for (const collectionProducts of results) {
         if (collectionProducts[round] && !seen.has(collectionProducts[round].id)) {
           seen.add(collectionProducts[round].id)
@@ -157,7 +159,6 @@ async function getMixedSectionProducts(
       }
     }
 
-    // Return first N products (already mixed from different collections)
     return allProducts.slice(0, totalCount)
   } catch {
     return []
@@ -270,23 +271,11 @@ export default async function HomePage() {
               <span className="product-section__eyebrow">{section.eyebrow}</span>
             </div>
 
-            <div className="product-section__grid">
-              {sectionProducts[idx].length > 0
-                ? sectionProducts[idx].map(product => (
-                    <ProductCard key={product.id} product={product} />
-                  ))
-                : Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="product-card product-card--skeleton">
-                      <div className="product-card__image"><div className="product-card__placeholder" /></div>
-                      <div className="product-card__info">
-                        <div style={{ height: 10, background: '#111', width: '40%', marginBottom: 6 }} />
-                        <div style={{ height: 13, background: '#111', width: '80%', marginBottom: 6 }} />
-                        <div style={{ height: 15, background: '#111', width: '30%' }} />
-                      </div>
-                    </div>
-                  ))
-              }
-            </div>
+            <RotatingProductGrid
+              products={sectionProducts[idx]}
+              visibleCount={4}
+              intervalMs={3000}
+            />
 
             <CollectionStrip collections={section.collections} collectionImages={collectionImages} />
           </section>
