@@ -377,3 +377,55 @@ export interface ShopifyProduct {
     values: string[];
   }[];
 }
+// ═══════════════════════════════════════════
+// AGREGAR ESTAS 2 FUNCIONES AL FINAL DE 
+// src/lib/shopify.ts (antes de cualquier export type final)
+// ═══════════════════════════════════════════
+
+// ═══════════════════════════════════════════
+// GET ALL COLLECTIONS (with images)
+// ═══════════════════════════════════════════
+export async function getAllCollections() {
+  const query = `
+    query GetAllCollections {
+      collections(first: 100, sortKey: TITLE) {
+        edges {
+          node {
+            id
+            title
+            handle
+            description
+            image {
+              url
+              altText
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  const data = await shopifyFetch(query);
+  return data?.collections?.edges?.map((edge: any) => edge.node) || [];
+}
+
+// ═══════════════════════════════════════════
+// GET COLLECTION IMAGES BY HANDLES
+// Returns a map of { handle: imageUrl }
+// ═══════════════════════════════════════════
+export async function getCollectionImages(handles: string[]): Promise<Record<string, string | null>> {
+  try {
+    const allCollections = await getAllCollections();
+    const imageMap: Record<string, string | null> = {};
+    
+    for (const handle of handles) {
+      const col = allCollections.find((c: any) => c.handle === handle);
+      imageMap[handle] = col?.image?.url ?? null;
+    }
+    
+    return imageMap;
+  } catch (error) {
+    console.error('Error fetching collection images:', error);
+    return {};
+  }
+}
