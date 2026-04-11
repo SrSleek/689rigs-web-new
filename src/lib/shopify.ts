@@ -278,6 +278,52 @@ export async function getCollectionImages(handles: string[]): Promise<Record<str
   }
 }
 
+/**
+ * Fetch product images from multiple collections.
+ * Returns a map of { handle: [imageUrl1, imageUrl2, ...] }
+ * Used to rotate thumbnails in the red collection strip.
+ */
+export async function getCollectionProductImages(
+  handles: string[],
+  imagesPerCollection: number = 6
+): Promise<Record<string, string[]>> {
+  const query = `
+    query GetProductImages($handle: String!, $count: Int!) {
+      collection(handle: $handle) {
+        products(first: $count) {
+          edges {
+            node {
+              featuredImage {
+                url
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  const result: Record<string, string[]> = {};
+
+  // Fetch all collections in parallel
+  await Promise.all(
+    handles.map(async (handle) => {
+      try {
+        const data = await shopifyFetch(query, { handle, count: imagesPerCollection });
+        const products = data?.collection?.products?.edges ?? [];
+        const images = products
+          .map((edge: any) => edge.node?.featuredImage?.url)
+          .filter((url: string | null | undefined): url is string => !!url);
+        result[handle] = images;
+      } catch (error) {
+        result[handle] = [];
+      }
+    })
+  );
+
+  return result;
+}
+
 export function formatPrice(amount: string | number, currencyCode: string = 'MXN'): string {
   const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
 
