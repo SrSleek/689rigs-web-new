@@ -142,16 +142,26 @@ const CATEGORY_TAGS = [
 
 /* ── Fetch helpers ─────────────────────────────────────────── */
 
-/** Fetch products from each collection in the category for rotation */
+/**
+ * Fetch products from specified source handles, with optional price filtering.
+ * Used for the rotating product carousel on homepage.
+ */
 async function getMixedSectionProducts(
-  collections: CollectionCard[],
-  totalCount = 12
+  sourceHandles: string[],
+  totalCount = 12,
+  options: {
+    maxPriceUSD?: number  // exclude products above this USD price
+    productsPerCollection?: number
+    shuffle?: boolean
+  } = {}
 ): Promise<ShopifyProduct[]> {
+  const { maxPriceUSD, productsPerCollection = 8, shuffle = true } = options
+
   try {
-    // Fetch 4 products from each collection in parallel
+    // Fetch products from each source collection in parallel
     const results = await Promise.all(
-      collections.map(col =>
-        getCollection(col.handle, 4)
+      sourceHandles.map(handle =>
+        getCollection(handle, productsPerCollection)
           .then(c => c?.products.nodes ?? [])
           .catch(() => [])
       )
@@ -160,15 +170,33 @@ async function getMixedSectionProducts(
     // Flatten all products and remove duplicates by id
     const seen = new Set<string>()
     const allProducts: ShopifyProduct[] = []
-    
+
     // Round-robin: take from each collection evenly
-    const maxRounds = 4
-    for (let round = 0; round < maxRounds; round++) {
+    for (let round = 0; round < productsPerCollection; round++) {
       for (const collectionProducts of results) {
-        if (collectionProducts[round] && !seen.has(collectionProducts[round].id)) {
-          seen.add(collectionProducts[round].id)
-          allProducts.push(collectionProducts[round])
+        const product = collectionProducts[round]
+        if (product && !seen.has(product.id)) {
+          seen.add(product.id)
+
+          // Apply price filter if specified
+          if (maxPriceUSD !== undefined) {
+            const price = parseFloat(product.priceRange?.minVariantPrice?.amount ?? '0')
+            const currency = product.priceRange?.minVariantPrice?.currencyCode ?? 'USD'
+            // Convert to USD for comparison (rough conversion if MXN)
+            const priceUSD = currency === 'USD' ? price : price / 17.5
+            if (priceUSD > maxPriceUSD) continue
+          }
+
+          allProducts.push(product)
         }
+      }
+    }
+
+    // Shuffle for variety on each page load
+    if (shuffle) {
+      for (let i = allProducts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allProducts[i], allProducts[j]] = [allProducts[j], allProducts[i]]
       }
     }
 
@@ -199,9 +227,59 @@ function PromoBanner({ id }: { id: number }) {
 export default async function HomePage() {
   // Fetch products and collection images in parallel
   const allCollectionHandles = [...new Set(SECTIONS.flatMap(s => s.collections.map(c => c.handle)))]
-  
+
+  // ── Section-specific config for product rotation ──
+  // Each section has its own source collections and price filter
+  const SECTION_CONFIG: Record<string, {
+    sources: string[]
+    maxPriceUSD?: number
+    totalCount: number
+  }> = {
+    // Sim Racing: rotate among ALL collections, max $1100 USD (~$20k MXN)
+    simracing: {
+      sources: SECTIONS.find(s => s.id === 'simracing')!.collections.map(c => c.handle),
+      maxPriceUSD: 1100,
+      totalCount: 50,
+    },
+    // Flight Sim: all flight sim collections, max $1100 USD
+    flysim: {
+      sources: SECTIONS.find(s => s.id === 'flysim')!.collections.map(c => c.handle),
+      maxPriceUSD: 1100,
+      totalCount: 50,
+    },
+    // PC Hardware: only PC Gaming (computers)
+    pchardware: {
+      sources: ['pcs'],
+      totalCount: 50,
+    },
+    // F1 Merch: only Gorras F1
+    f1merch: {
+      sources: ['gorras-oficial-f1'],
+      totalCount: 50,
+    },
+    // Motorsport: only Mochilas MS
+    motorsport: {
+      sources: ['mochila-motorsport'],
+      totalCount: 50,
+    },
+  }
+
   const [sectionProducts, collectionImages] = await Promise.all([
-    Promise.all(SECTIONS.map(s => getMixedSectionProducts(s.collections, 4))),
+    Promise.all(SECTIONS.map(s => {
+      const config = SECTION_CONFIG[s.id]
+      if (!config) {
+        // Fallback: use all collections of section
+        return getMixedSectionProducts(
+          s.collections.map(c => c.handle),
+          12
+        )
+      }
+      return getMixedSectionProducts(
+        config.sources,
+        config.totalCount,
+        { maxPriceUSD: config.maxPriceUSD }
+      )
+    })),
     getCollectionImages(allCollectionHandles).catch(() => ({} as Record<string, string | null>)),
   ])
 
