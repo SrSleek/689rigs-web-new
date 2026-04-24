@@ -15,7 +15,7 @@ export async function shopifyFetch(query: string, variables: Record<string, any>
       'X-Shopify-Storefront-Access-Token': storefrontToken,
     },
     body: JSON.stringify({ query, variables }),
-    next: { revalidate: 60 },
+    next: { revalidate: 3600 },
   });
 
   if (!res.ok) {
