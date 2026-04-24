@@ -18,7 +18,6 @@ export default function RotatingThumb({
   const [currentIndex, setCurrentIndex] = useState(0)
   const [fading, setFading] = useState(false)
 
-  // Build the actual list to rotate through
   const imagesToShow = images.length > 0
     ? images
     : (fallbackImage ? [fallbackImage] : [])
@@ -28,27 +27,23 @@ export default function RotatingThumb({
   useEffect(() => {
     if (!shouldRotate) return
 
-    // Random initial delay (0-2s) so all thumbs don't rotate at the same instant
     const initialDelay = Math.random() * 2000
 
-    const startTimeout = setTimeout(() => {
-      const timer = setInterval(() => {
+    let timer: ReturnType<typeof setInterval>
+
+    const timeout = setTimeout(() => {
+      timer = setInterval(() => {
         setFading(true)
         setTimeout(() => {
           setCurrentIndex(prev => (prev + 1) % imagesToShow.length)
           setFading(false)
         }, 250)
       }, intervalMs)
-
-      // Store timer cleanup
-      ;(startTimeout as any)._timer = timer
     }, initialDelay)
 
     return () => {
-      clearTimeout(startTimeout)
-      if ((startTimeout as any)._timer) {
-        clearInterval((startTimeout as any)._timer)
-      }
+      clearTimeout(timeout)
+      if (timer) clearInterval(timer)
     }
   }, [imagesToShow.length, intervalMs, shouldRotate])
 
