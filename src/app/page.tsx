@@ -385,7 +385,7 @@ export default async function HomePage() {
           <div className="site-footer__col">
             <h4 className="site-footer__heading">Contacto</h4>
             <Link href="https://wa.me/522215698976" target="_blank" className="site-footer__link">💬 WhatsApp: +52 221 569 8976</Link>
-            <Link href="mailto:689.accessories@gmail.com" className="site-footer__link">✉ 689.accessories@gmail.com</Link>
+            <Link href="mailto:marketing@689rigs.com" className="site-footer__link">✉ marketing@689rigs.com</Link>
             <div className="site-footer__socials">
               <Link href="https://instagram.com/689.rigs" target="_blank" className="site-footer__social" aria-label="Instagram 689.rigs">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" /><circle cx="12" cy="12" r="5" /><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none" /></svg>
