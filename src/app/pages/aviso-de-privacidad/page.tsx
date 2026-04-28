@@ -69,7 +69,7 @@ export default function AvisoPrivacidadPage() {
             }}>
               <span><Strong>Nombre comercial:</Strong> 689 Rigs / 689 Accessories</span>
               <span><Strong>Domicilio:</Strong> Barrio Cascatta, Local 2do Piso, Puebla, Puebla, México</span>
-              <span><Strong>Correo electrónico:</Strong> 689.accessories@gmail.com</span>
+              <span><Strong>Correo electrónico:</Strong> marketing@689rigs.com</span>
               <span><Strong>Teléfono / WhatsApp:</Strong> +52 221 569 8976</span>
               <span><Strong>Sitio web:</Strong> www.689rigs.com</span>
             </div>
@@ -108,7 +108,7 @@ export default function AvisoPrivacidadPage() {
             ]} />
             <P>
               Si no desea que sus datos sean tratados para las finalidades adicionales, puede comunicarlo
-              al correo 689.accessories@gmail.com en cualquier momento.
+              al correo marketing@689rigs.com en cualquier momento.
             </P>
           </Section>
 
@@ -139,7 +139,7 @@ export default function AvisoPrivacidadPage() {
             <P>
               Usted tiene derecho a Acceder, Rectificar, Cancelar u Oponerse al tratamiento de sus datos
               personales (derechos ARCO). Para ejercer cualquiera de estos derechos, envíe una solicitud
-              al correo electrónico <Strong>689.accessories@gmail.com</Strong> con la siguiente información:
+              al correo electrónico <Strong>marketing@689rigs.com</Strong> con la siguiente información:
             </P>
             <Ol items={[
               'Nombre completo del titular de los datos.',
@@ -157,7 +157,7 @@ export default function AvisoPrivacidadPage() {
           <Section number="07" title="Revocación del Consentimiento">
             <P>
               Usted puede revocar su consentimiento para el tratamiento de sus datos personales en cualquier
-              momento, enviando una solicitud al correo 689.accessories@gmail.com. Tenga en cuenta que en
+              momento, enviando una solicitud al correo marketing@689rigs.com. Tenga en cuenta que en
               algunos casos no podremos atender su solicitud de manera inmediata si los datos son necesarios
               para el cumplimiento de obligaciones legales o contractuales vigentes.
             </P>
@@ -206,7 +206,7 @@ export default function AvisoPrivacidadPage() {
             <P>
               689 Rigs se reserva el derecho de modificar el presente Aviso de Privacidad en cualquier
               momento. Las modificaciones serán publicadas y disponibles en nuestro sitio web en la
-              dirección: <Strong>www.689rigs.com/pages/aviso-de-privacidad</Strong>.
+              dirección: <Strong>www.https://www.689rigs.com/pages/avisodeprivacidad</Strong>.
             </P>
             <P>
               Le recomendamos revisar periódicamente este aviso para mantenerse informado sobre cómo
@@ -230,7 +230,7 @@ export default function AvisoPrivacidadPage() {
               padding: '16px', background: '#0a0a0a', border: '1px solid #1e1e1e',
               marginTop: '12px',
             }}>
-              <ContactItem icon="📧" label="Email" value="689.accessories@gmail.com" href="mailto:689.accessories@gmail.com" />
+              <ContactItem icon="📧" label="Email" value="marketing@689rigs.com" href="mailto:marketing@689rigs.com" />
               <ContactItem icon="📱" label="WhatsApp" value="+52 221 569 8976" href="https://wa.me/522215698976" />
               <ContactItem icon="📍" label="Domicilio" value="Barrio Cascatta, Local 2do Piso, Puebla, Puebla, México" />
             </div>

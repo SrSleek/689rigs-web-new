@@ -91,7 +91,7 @@ export default function PoliticaDevolucionesPage() {
           <Section number="04" title="¿Cómo Solicitar una Devolución?">
             <P>El proceso es sencillo:</P>
             <Ol items={[
-              'Contáctanos por WhatsApp al +52 221 569 8976 o al correo 689.accessories@gmail.com indicando tu número de pedido y el motivo de la devolución.',
+              'Contáctanos por WhatsApp al +52 221 569 8976 o al correo marketing@689rigs.com indicando tu número de pedido y el motivo de la devolución.',
               'Nuestro equipo revisará tu solicitud y te confirmará si procede dentro de un plazo de 1 a 3 días hábiles.',
               'Una vez aprobada, te indicaremos las instrucciones para enviar o entregar el producto.',
               'Al recibir y verificar el estado del producto, procederemos con el reembolso o crédito según tu preferencia.',
@@ -177,8 +177,8 @@ export default function PoliticaDevolucionesPage() {
               marginTop: '12px',
             }}>
               <ContactItem icon="📱" label="WhatsApp" value="+52 221 569 8976" href="https://wa.me/522215698976" />
-              <ContactItem icon="📧" label="Email" value="689.accessories@gmail.com" href="mailto:689.accessories@gmail.com" />
-              <ContactItem icon="📍" label="Tienda" value="Barrio Cascatta, Puebla · Lun–Dom 12pm–10pm" />
+              <ContactItem icon="📧" label="Email" value="marketing@689rigs.com" href="mailto:689.accessories@gmail.com" />
+              <ContactItem icon="📍" label="Tienda" value="Barrio Cascatta, Puebla · Lun–Dom 12pm–09pm" />
               <ContactItem icon="📷" label="Instagram" value="@689.rigs" href="https://instagram.com/689.rigs" />
             </div>
           </Section>
