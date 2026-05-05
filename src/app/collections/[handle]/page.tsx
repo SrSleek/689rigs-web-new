@@ -41,6 +41,8 @@ const BREADCRUMB_MAP: Record<string, BreadcrumbInfo> = {
   'juguetes':                            { parent: 'Merch & Coleccionables', parentHref: '/collections/juguetes', eyebrow: 'Merch · Juguetes' },
 }
 
+export const revalidate = 60
+
 export default async function CollectionPage({ params }: Props) {
   const { handle } = await params
 
